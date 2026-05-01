@@ -1,9 +1,13 @@
 import streamlit as st
 import pickle
+import os
 
-# Load data
-movies = pickle.load(open('movies.pkl', 'rb'))
-similarity = pickle.load(open('similarity.pkl', 'rb'))
+# Load data safely
+movies_path = os.path.join(os.getcwd(), "movies.pkl")
+similarity_path = os.path.join(os.getcwd(), "similarity.pkl")
+
+movies = pickle.load(open(movies_path, 'rb'))
+similarity = pickle.load(open(similarity_path, 'rb'))
 
 # Default poster
 default_poster = "https://via.placeholder.com/150x220.png?text=Movie"
@@ -39,7 +43,7 @@ if st.button("Recommend"):
     with st.spinner("Finding best movies..."):
         names = recommend(selected_movie, num)
 
-        st.success("Recommendations generated successfully!")  # ✅ added
+        st.success("Recommendations generated successfully!")
 
         cols = st.columns(5)
         for i in range(len(names)):
