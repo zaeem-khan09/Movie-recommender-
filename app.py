@@ -1,32 +1,48 @@
 import streamlit as st
-import pandas as pd
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import CountVectorizer
+import pickle
 
-st.title("Movie Recommendation System 🎬")
+# Load data
+movies = pickle.load(open('movies.pkl', 'rb'))
+similarity = pickle.load(open('similarity.pkl', 'rb'))
 
-data = {
-    'movie': ['Avengers', 'Iron Man', 'Thor', 'Titanic', 'Notebook', 'Inception'],
-    'genre': ['action hero', 'action tech', 'action god', 'romance drama', 'romance love', 'sci-fi thriller']
-}
+# Default poster
+default_poster = "https://via.placeholder.com/150x220.png?text=Movie"
 
-df = pd.DataFrame(data)
+# Recommend function
+def recommend(movie, num):
+    movie_index = movies[movies['title'] == movie].index[0]
+    distances = similarity[movie_index]
+    movies_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:num+1]
 
-cv = CountVectorizer()
-matrix = cv.fit_transform(df['genre'])
+    recommended_movies = []
+    for i in movies_list:
+        recommended_movies.append(movies.iloc[i[0]].title)
 
-similarity = cosine_similarity(matrix)
+    return recommended_movies
 
-movie_name = st.text_input("Enter movie name:")
+# Page config
+st.set_page_config(page_title="Movie Recommender", layout="wide")
 
-if movie_name:
-    if movie_name in df['movie'].values:
-        index = df[df['movie'] == movie_name].index[0]
-        scores = list(enumerate(similarity[index]))
-        sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
+# UI
+st.title("🎬 Movie Recommendation System")
+st.write("Find movies similar to your favorite ones!")
 
-        st.write("Recommended movies:")
-        for i in sorted_scores[1:4]:
-            st.write(df.iloc[i[0]].movie)
-    else:
-        st.write("Movie not found")
+selected_movie = st.selectbox(
+    "Select a movie",
+    movies['title'].values
+)
+
+num = st.slider("Number of recommendations", 5, 10)
+
+# Button
+if st.button("Recommend"):
+    with st.spinner("Finding best movies..."):
+        names = recommend(selected_movie, num)
+
+        st.success("Recommendations generated successfully!")  # ✅ added
+
+        cols = st.columns(5)
+        for i in range(len(names)):
+            with cols[i % 5]:
+                st.image(default_poster)
+                st.caption(names[i])
